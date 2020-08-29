@@ -5,9 +5,10 @@ import seedDatabase, {
   userOne,
   userTwo,
   commentOne,
+  postOne,
 } from "./utils/seedDatabase";
 import getClient from "./utils/getClient";
-import { deleteComment } from "./utils/operations";
+import { deleteComment, subscribeToComments } from "./utils/operations";
 
 const client = getClient();
 
@@ -38,4 +39,23 @@ test("should not delete other users comment", async () => {
       variables,
     })
   ).rejects.toThrow();
+});
+
+test("should subscribe to comment for a post", async (done) => {
+  const variables = {
+    postId: postOne.post.id,
+  };
+
+  client.subscribe({ query: subscribeToComments, variables }).subscribe({
+    next(response) {
+      expect(response.data.comment.mutation).toBe("DELETED");
+      done();
+    },
+  });
+
+  await prisma.mutation.deleteComment({
+    where: {
+      id: commentOne.comment.id,
+    },
+  });
 });
